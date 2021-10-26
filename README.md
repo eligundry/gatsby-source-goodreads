@@ -8,6 +8,12 @@ There are many Gatsby Goodreads sources, why make another? It was fun AND all th
 Goodreads API which is due to be deprecated soon. This plugin scrapes for the publically accessible HTML available on
 their website. Also, no need to fiddle with API keys to pull the data!
 
+## Installation
+
+```bash
+$ npm install -S @eligundry/gatsby-source-goodreads
+```
+
 ## Usage
 
 In `gatsby-config.js`:
