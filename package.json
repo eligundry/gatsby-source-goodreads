@@ -1,6 +1,6 @@
 {
   "name": "@eligundry/gatsby-source-goodreads",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Gatsby source the provides user shelves from GoodReads",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,12 @@
     "type": "git",
     "url": "https://github.com/eligundry/gatsby-source-goodreads"
   },
+  "keywords": [
+    "gatsby",
+    "gatsby-plugin",
+    "gatsby-source-plugin",
+    "goodreads"
+  ],
   "license": "MIT",
   "prettier": {
     "trailingComma": "es5",
