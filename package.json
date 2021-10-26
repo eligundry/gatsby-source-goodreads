@@ -8,6 +8,10 @@
     "prepublishOnly": "npm run build"
   },
   "author": "eligundry@gmail.com <Eli Gundry>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eligundry/gatsby-source-goodreads"
+  },
   "license": "MIT",
   "prettier": {
     "trailingComma": "es5",
