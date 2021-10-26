@@ -7,7 +7,7 @@ import {
   CreateRemoteFileNodeArgs,
 } from 'gatsby-source-filesystem'
 
-interface GatsbySourceGoodReadsOptions {
+export interface GatsbySourceGoodReadsOptions {
   userID: string
   shelves: string[]
 }
@@ -34,19 +34,19 @@ export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] 
     actions.createTypes(
       `
       type GoodreadsBook implements Node {
-        title: String!
-        author: String!
-        isbn: String!
-        isbn13: String!
-        asin: String!
-        pages: Int!
+        title: String
+        author: String
+        isbn: String
+        isbn13: String
+        asin: String
+        pages: Int
         published: Date
         started: Date
         finished: Date
-        conver: String!
+        cover: String
         coverImage: File @link
-        url: String!
-        shelf: String!
+        url: String
+        shelf: String
       }
       `
     )
