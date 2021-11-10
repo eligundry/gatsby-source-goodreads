@@ -1,6 +1,6 @@
 {
   "name": "@eligundry/gatsby-source-goodreads",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Gatsby source the provides user shelves from GoodReads",
   "main": "index.js",
   "scripts": {
