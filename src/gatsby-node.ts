@@ -14,8 +14,8 @@ export interface GatsbySourceGoodReadsOptions {
 
 export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
   Joi,
-}) => {
-  return Joi.object({
+}) =>
+  Joi.object({
     userID: Joi.string()
       .required()
       .description(
@@ -27,7 +27,6 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
         'Shelves to be fetched from GoodReads. Examples are currently-reading, read, want-to-read'
       ),
   })
-}
 
 export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] =
   ({ actions }) => {
@@ -163,7 +162,7 @@ const trimChars = '\n *'
 const getDateField = (row: Element, selector: string): Date | null => {
   const rawDate = row.querySelector(selector)?.textContent
 
-  if (rawDate) {
+  if (rawDate && !rawDate.includes('unknown')) {
     return new Date(trim(rawDate, trimChars))
   }
 
