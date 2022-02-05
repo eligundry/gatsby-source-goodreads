@@ -24,7 +24,7 @@ module.exports = {
     {
       resolve: '@eligundry/gatsby-source-goodreads',
       options: {
-        userID: 123,
+        userID: '123',
         shelves: ['currently-reading', 'read'],
       }
     }
