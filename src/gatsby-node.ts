@@ -12,6 +12,22 @@ export interface GatsbySourceGoodReadsOptions {
   shelves: string[]
 }
 
+export interface GoodReadsBook {
+  title: string | null
+  author: string | null
+  isbn: string | null
+  isbn13: string | null
+  asin: string | null
+  pages: number | null
+  published: Date | null
+  started: Date | null
+  finished: Date | null
+  cover: string | null
+  coverImage: string | null
+  url: string | null
+  shelf: string | null
+}
+
 export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
   Joi,
 }) =>
@@ -56,8 +72,24 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   args,
   options: GatsbySourceGoodReadsOptions
 ) => {
-  const { createNodeId, createContentDigest } = args
+  const { createNodeId, createContentDigest, reporter, parentSpan } = args
   const { createNode } = args.actions
+  const books: GoodReadsBook[] = []
+
+  const fetchShelvesActivity = reporter.activityTimer(
+    'Goodreads: Fetch shelves',
+    { parentSpan }
+  )
+  const fetchImagesActivity = reporter.activityTimer(
+    'Goodreads: Fetch images',
+    { parentSpan }
+  )
+  const createShelvesActivity = reporter.activityTimer(
+    'Goodreads: Create nodes',
+    { parentSpan }
+  )
+
+  fetchShelvesActivity.start()
 
   for (const shelf of options.shelves) {
     let goodreadsHTML: AxiosResponse<string> | null
@@ -75,6 +107,7 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
       )
     } catch (e) {
       console.error('could not fetch Goodreads shelf', e)
+      fetchShelvesActivity.end()
       return
     }
 
@@ -98,7 +131,7 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
           return
         }
 
-        const book = {
+        books.push({
           title: customTrim(
             row?.querySelector('td.field.title a')?.getAttribute('title')
           ),
@@ -129,32 +162,46 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
           coverImage: null,
           url: urlPath ? `https://www.goodreads.com${urlPath}` : null,
           shelf,
-        }
-
-        const imageNode = await loadImage({
-          cacheKey: `local-goodreads-cover-${book.isbn}`,
-          url: book.cover,
-          createNode,
-          ...args,
-        })
-
-        // @ts-ignore
-        book.coverImage = imageNode.id
-
-        createNode({
-          id: createNodeId(`goodreads-book-${book.isbn}`),
-          parent: null,
-          children: [],
-          internal: {
-            type: 'GoodreadsBook',
-            content: JSON.stringify(book),
-            contentDigest: createContentDigest(book),
-          },
-          ...book,
         })
       })
     )
   }
+
+  fetchShelvesActivity.end()
+  fetchImagesActivity.start()
+
+  for (let i = 0; i < books.length; i++) {
+    if (books[i].isbn && books[i].cover) {
+      const imageNode = await loadImage({
+        cacheKey: `local-goodreads-cover-${books[i].isbn}`,
+        // @ts-ignore
+        url: books[i].cover,
+        createNode,
+        ...args,
+      })
+
+      books[i].coverImage = imageNode.id
+    }
+  }
+
+  fetchImagesActivity.end()
+  createShelvesActivity.start()
+
+  books.forEach((book) =>
+    createNode({
+      id: createNodeId(`goodreads-book-${book.isbn}`),
+      parent: null,
+      children: [],
+      internal: {
+        type: 'GoodreadsBook',
+        content: JSON.stringify(book),
+        contentDigest: createContentDigest(book),
+      },
+      ...book,
+    })
+  )
+
+  createShelvesActivity.end()
 }
 
 const trimChars = '\n *'
