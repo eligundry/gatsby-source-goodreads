@@ -77,46 +77,47 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   const books: GoodReadsBook[] = []
 
   const fetchShelvesActivity = reporter.activityTimer(
-    'Goodreads: Fetch shelves',
+    '@eligundry/gatsby-source-goodreads: Fetch shelves',
     { parentSpan }
   )
   const fetchImagesActivity = reporter.activityTimer(
-    'Goodreads: Fetch images',
+    '@eligundry/gatsby-source-goodreads: Fetch images',
     { parentSpan }
   )
   const createShelvesActivity = reporter.activityTimer(
-    'Goodreads: Create nodes',
+    '@eligundry/gatsby-source-goodreads: Create nodes',
     { parentSpan }
   )
 
   fetchShelvesActivity.start()
 
-  for (const shelf of options.shelves) {
-    let goodreadsHTML: AxiosResponse<string> | null
+  await Promise.all(
+    options.shelves.map(async (shelf) => {
+      let goodreadsHTML: AxiosResponse<string> | null
 
-    try {
-      goodreadsHTML = await axios.get<string>(
-        `https://www.goodreads.com/review/list/${options.userID}`,
-        {
-          params: {
-            ref: 'nav_mybooks',
-            shelf,
-            per_page: 100,
-          },
-        }
-      )
-    } catch (e) {
-      console.error('could not fetch Goodreads shelf', e)
-      fetchShelvesActivity.end()
-      return
-    }
+      try {
+        goodreadsHTML = await axios.get<string>(
+          `https://www.goodreads.com/review/list/${options.userID}`,
+          {
+            params: {
+              ref: 'nav_mybooks',
+              shelf,
+              per_page: 100,
+            },
+          }
+        )
+      } catch (e) {
+        console.error('could not fetch Goodreads shelf', e)
+        fetchShelvesActivity.end()
+        throw e
+      }
 
-    const { document: goodreadsDocument } = new JSDOM(goodreadsHTML.data).window
+      const { document: goodreadsDocument } = new JSDOM(goodreadsHTML.data)
+        .window
 
-    await Promise.all(
       Array.from(
         goodreadsDocument.querySelectorAll('#booksBody .bookalike')
-      ).map(async (row) => {
+      ).map((row) => {
         const cover = row
           ?.querySelector('td.field.cover img')
           ?.getAttribute('src')
@@ -164,25 +165,27 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
           shelf,
         })
       })
-    )
-  }
+    })
+  )
 
   fetchShelvesActivity.end()
   fetchImagesActivity.start()
 
-  for (let i = 0; i < books.length; i++) {
-    if (books[i].isbn && books[i].cover) {
-      const imageNode = await loadImage({
-        cacheKey: `local-goodreads-cover-${books[i].isbn}`,
-        // @ts-ignore
-        url: books[i].cover,
-        createNode,
-        ...args,
-      })
+  await Promise.all(
+    books.map(async (book, i) => {
+      if (book.isbn && book.cover) {
+        const imageNode = await loadImage({
+          cacheKey: `local-goodreads-cover-${book.isbn}`,
+          // @ts-ignore
+          url: book.cover,
+          createNode,
+          ...args,
+        })
 
-      books[i].coverImage = imageNode.id
-    }
-  }
+        books[i].coverImage = imageNode.id
+      }
+    })
+  )
 
   fetchImagesActivity.end()
   createShelvesActivity.start()
